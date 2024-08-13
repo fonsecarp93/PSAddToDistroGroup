@@ -1,0 +1,28 @@
+#### This Powershell script will delete empty folders in file explorer ####
+#### This script will keep looping through the directory structure, deleting empty folders until there are no more left. ####
+#### The "While" loop continues to call the "ProcessFolder" Function until it returns 'false', meaning there are no more empty folders to delete. ####
+
+
+$Path = "Z:\EmptyFoldersTest\2nd Test PartMORE Folders\New folder"
+
+function ProcessFolder {
+    param (
+        $Path
+    )
+    $children = Get-ChildItem -Force -Path $Path
+    if ($null -eq $children) {
+        #Delete Path#
+        Remove-Item -Path $Path
+        return $true
+    }
+    $folders = $children | Where-Object { $_.Extension -eq "" }
+    foreach ($folder in $folders) {
+        ProcessFolder -Path $folder.FullName
+    }
+}
+### ProcessFolder -Path $Path
+### loop until no more empty folders are found
+While (processFolder -Path $Path) {}
+
+Write-Host "Empty folders deleted."
+
