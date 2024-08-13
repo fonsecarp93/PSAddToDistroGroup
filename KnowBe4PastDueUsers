@@ -1,0 +1,34 @@
+#### This Powershell script wil export a custom file which will contain all users who are currently "Past Due" in our company training campaign ####
+#### It will use a CSV pulled directly from the site, and export a file containing all data that is necessary ####
+#### It will exclude certain users from this list, and create a file that is the date of the export ####
+
+
+class ExportModel {
+    $Email
+    $DisplayName
+    $CampaignName
+    $TrainingStatus
+    ExportModel($email , $campaignName , $trainingStatus , $displayName) {
+        $this.Email = $email
+        $this.CampaignName = $campaignName
+        $this.TrainingStatus = $trainingStatus
+        $this.DisplayName = $displayName
+    }
+}
+#Next thing to add, is the User's Phone number. This will help me with contacting users, to let them know about their status#
+$basePath = "C:\Temp\FileOrigination"
+$importFile = join-path -path $basePath -ChildPath "90DayTrainingReport.csv"
+$exportFileName = "$(Get-Date -Format "MM-dd-yyyy").csv"
+$exportFile = join-path -path $basePath -ChildPath "PastDueUsers" -AdditionalChildPath $exportFileName
+$ignoreEmail = "Example@gmail.com", "Somethingelse@hotmail.com"
+$importData = Import-Csv $importFile | Where-Object {$_.Email -notin $ignoreEmail}
+$pastDue = $importData | Where-Object {$_."Training Status" -ne "Completed"} | Select-Object -Property Email, "Campaign Name", "Training Status"
+$exportList = New-Object 'System.Collections.Generic.List[ExportModel]'
+ForEach ($user in $pastDue) {
+    $adUser = Get-ADUser -filter $('UserPrincipalName -eq "'+"$($user.Email)"+'"') -Properties DisplayName
+    $model = [ExportModel]::new($User.Email , $User.'Campaign Name' , $User.'Training Status' , $adUser.DisplayName)
+    $exportList.Add($model)
+}
+$exportList | Export-Csv $exportFile
+
+Write-Host -Message "Your CSV file has now been exported."
