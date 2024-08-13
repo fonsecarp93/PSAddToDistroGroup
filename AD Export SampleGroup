@@ -1,0 +1,18 @@
+#### The goal is to find all OFFICE employees that are NOT in the SampleGroup ####
+#### THEN we want to add them INTO the SampleGroup ####
+#### End Goal - Give me all office employees who aren't in AllTeamsGroup. We can ignore all users who are already in SampleGroup ####
+
+
+$creds = Get-Credential
+$creds
+$Groupname = "SampleGroup"
+$users = Get-ADUser -Filter 'Enabled -eq "True" -and Employeetype -like "Office"' -Properties MemberOf, PrimaryGroup | Sort-Object -Property SamAccountName
+$dugDn = (Get-ADGroup "$Groupname").DistinguishedName
+foreach ($user in $users) {
+    Write-Verbose "Working on $($user.Name)"
+    $groups = $user.MemberOf, $user.PrimaryGroup
+    if ($groups -NotContains $dugDN){
+        Add-ADGroupMember -Identity $dugDn -Members "$($user.SamAccountName)"
+        Write-Host "$($user.SamAccountName) not in $Groupname" -f green
+    }
+}
