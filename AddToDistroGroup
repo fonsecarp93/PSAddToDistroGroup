@@ -1,0 +1,19 @@
+# This (Powershell) script will find ALL mailboxes in our organization and ADD all users to a group, who are not already Part of that group#
+
+
+Connect-ExchangeOnline
+
+######Change variable $DistroGroup to the Distribution list we're wanting to add people to#######
+
+$DistroGroup = "PBIE_OPS_Extended"
+$DistroSmtps = (Get-DistributionGroupMember $DistroGroup).PrimarySmtpAddress
+$AllMailboxes = (Get-Mailbox -Filter *).PrimarySmtpAddress
+foreach ($user in $AllMailboxes) {
+    if ($DistroSmtps -notcontains $user) {
+        Add-DistributionGroupMember -Identity $DistroGroup -Member "$user"
+        Write-Host "$user has been added to $DistroGroup"
+    }
+    else {
+        Write-Host "$user already exists in $DistroGroup"
+    }
+}
